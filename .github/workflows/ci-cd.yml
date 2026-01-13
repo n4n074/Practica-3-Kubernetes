@@ -85,6 +85,18 @@ jobs:
           pip install pytest pytest-cov pytest-mock
       
       - name: Run pytest
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: testdb
+          DB_USER: testuser
+          DB_PASSWORD: testpass
+          MINIO_ENDPOINT: localhost:9000
+          MINIO_USER: minioadmin
+          MINIO_PASSWORD: minioadmin
+          MINIO_PUBLIC_PORT: 9000
+          REDIS_PORT: 0
+          LB_PORT: 80
         run: |
           echo "Running tests with coverage..."
           cd app
