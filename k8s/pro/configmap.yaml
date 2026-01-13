@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: pro
+data:
+  environment: "pro"
+  redis_host: "redis"
+  redis_port: "6379"
+  minio_public_port: "9000"
+  lb_host: "web-app"
+  lb_port: "80"

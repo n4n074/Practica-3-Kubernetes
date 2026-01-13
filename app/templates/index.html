@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Infraestructura Cloud</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard de Infraestructura</h1>
+
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/users">Usuarios</a>
+            <a href="/health">Health Check</a>
+            <a href="/health/ready">Health Ready</a>
+        </nav>
+
+        <h2>Estado de los Servicios</h2>
+        <ul class="status-list">
+            <li>
+                <strong>PostgreSQL:</strong> 
+                <span class="{{ 'ok' if db_status else 'fail' }}">
+                    {{ 'Disponible' if db_status else 'No disponible' }}
+                </span>
+            </li>
+            {% if redis_configured %}
+            <li>
+                <strong>Redis (Caché de Respaldo):</strong> 
+                <span class="{{ 'ok' if cache_status else 'fail' }}">
+                    {{ 'Disponible' if cache_status else 'No disponible' }}
+                </span>
+            </li>
+            {% endif %}
+            <li>
+                <strong>MinIO:</strong> 
+                <span class="{{ 'ok' if minio_status else 'fail' }}">
+                    {{ 'Disponible' if minio_status else 'No disponible' }}
+                </span>
+            </li>
+        </ul>
+
+        <h2>Características</h2>
+        <ul>
+            <li><strong>Alta disponibilidad:</strong> Si PostgreSQL falla, los datos se sirven desde caché Redis automáticamente</li>
+            <li><strong>Almacenamiento de imágenes:</strong> Las fotos de usuarios se guardan en MinIO (S3-compatible)</li>
+            <li><strong>Balanceo de carga:</strong> Múltiples instancias de la aplicación distribuyen el tráfico</li>
+            <li><strong>Monitorización:</strong> Prometheus y Grafana para métricas en tiempo real</li>
+        </ul>
+    </div>
+</body>
+</html>

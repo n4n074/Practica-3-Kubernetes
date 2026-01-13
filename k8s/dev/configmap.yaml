@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: dev
+data:
+  environment: "dev"
+  redis_host: ""  # No hay Redis en dev
+  redis_port: "0"
+  minio_public_port: "9000"
+  lb_host: "web-app"
+  lb_port: "80"

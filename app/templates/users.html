@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestión de Usuarios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Usuarios (PostgreSQL + MinIO)</h1>
+        
+        <div class="instance">
+            <strong>Instancia:</strong> {{ instance_id }}
+        </div>
+
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/users">Usuarios (PostgreSQL)</a>
+                       
+        </nav>
+
+        {% if error %}
+        <div class="error">Error: {{ error }}</div>
+        {% endif %}
+
+        <h2>Añadir Usuario</h2>
+        <form method="POST" action="/users/add" enctype="multipart/form-data">
+            <input type="text" name="name" placeholder="Nombre" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="file" name="image" accept="image/*" required>
+            <button type="submit">Añadir Usuario</button>
+        </form>
+
+        <h2>Usuarios Registrados ({{ users|length }})</h2>
+        {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Fecha Creación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        {% if user.image_display_url %}
+                        <img src="{{ user.image_display_url }}" alt="{{ user.name }}" class="user-image">
+                        {% else %}
+                        <div class="no-image">Sin foto</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.created_at }}</td>
+                    <td>
+                        <a href="/users/delete/{{ user.id }}" class="delete" 
+                           onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No hay usuarios registrados. Añade el primero usando el formulario.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

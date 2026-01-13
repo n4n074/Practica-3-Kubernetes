@@ -1,0 +1,333 @@
+# Configuración personalizada para kube-prometheus-stack
+
+# Grafana
+grafana:
+  enabled: true
+  adminPassword: admin123
+  
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - grafana.monitoring.localhost
+    path: /
+  
+  # Dashboard personalizado para Flask
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+  
+  dashboards:
+    default:
+      flask-app-dashboard:
+        json: |
+          {
+            "title": "Flask Application Monitor",
+            "uid": "flask-app-monitor",
+            "timezone": "browser",
+            "schemaVersion": 16,
+            "refresh": "5s",
+            "panels": [
+              {
+                "id": 1,
+                "title": "Requests por Segundo",
+                "type": "graph",
+                "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+                "targets": [
+                  {
+                    "expr": "sum(rate(flask_http_request_total[1m])) by (environment)",
+                    "legendFormat": "{{environment}}",
+                    "refId": "A"
+                  }
+                ],
+                "yaxes": [
+                  {"format": "reqps", "label": "Requests/s"},
+                  {"format": "short"}
+                ]
+              },
+              {
+                "id": 2,
+                "title": "Latencia Promedio (segundos)",
+                "type": "graph",
+                "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+                "targets": [
+                  {
+                    "expr": "rate(flask_http_request_duration_seconds_sum[1m]) / rate(flask_http_request_duration_seconds_count[1m])",
+                    "legendFormat": "{{environment}} - {{method}} {{path}}",
+                    "refId": "A"
+                  }
+                ],
+                "yaxes": [
+                  {"format": "s", "label": "Latencia"},
+                  {"format": "short"}
+                ]
+              },
+              {
+                "id": 3,
+                "title": "Requests por Código de Estado",
+                "type": "graph",
+                "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+                "targets": [
+                  {
+                    "expr": "sum(rate(flask_http_request_total[1m])) by (status, environment)",
+                    "legendFormat": "{{environment}} - {{status}}",
+                    "refId": "A"
+                  }
+                ],
+                "yaxes": [
+                  {"format": "reqps"},
+                  {"format": "short"}
+                ]
+              },
+              {
+                "id": 4,
+                "title": "Pods Activos",
+                "type": "stat",
+                "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4},
+                "targets": [
+                  {
+                    "expr": "count(up{job=\"flask-app-dev\"} == 1)",
+                    "legendFormat": "DEV",
+                    "refId": "A"
+                  },
+                  {
+                    "expr": "count(up{job=\"flask-app-pro\"} == 1)",
+                    "legendFormat": "PRO",
+                    "refId": "B"
+                  }
+                ],
+                "options": {
+                  "reduceOptions": {
+                    "values": false,
+                    "calcs": ["lastNotNull"]
+                  },
+                  "orientation": "horizontal",
+                  "textMode": "value_and_name",
+                  "colorMode": "value",
+                  "graphMode": "none"
+                },
+                "fieldConfig": {
+                  "defaults": {
+                    "mappings": [],
+                    "thresholds": {
+                      "mode": "absolute",
+                      "steps": [
+                        {"value": null, "color": "green"}
+                      ]
+                    },
+                    "unit": "none"
+                  }
+                }
+              },
+              {
+                "id": 5,
+                "title": "Tasa de Errores 5xx",
+                "type": "stat",
+                "gridPos": {"x": 18, "y": 8, "w": 6, "h": 4},
+                "targets": [
+                  {
+                    "expr": "sum(rate(flask_http_request_total{status=~\"5..\"}[1m])) / sum(rate(flask_http_request_total[1m])) * 100",
+                    "legendFormat": "Errores %",
+                    "refId": "A"
+                  }
+                ],
+                "options": {
+                  "colorMode": "value",
+                  "graphMode": "area",
+                  "textMode": "value"
+                },
+                "fieldConfig": {
+                  "defaults": {
+                    "unit": "percent",
+                    "thresholds": {
+                      "mode": "absolute",
+                      "steps": [
+                        {"value": 0, "color": "green"},
+                        {"value": 1, "color": "yellow"},
+                        {"value": 5, "color": "red"}
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "id": 6,
+                "title": "Requests Totales por Ruta",
+                "type": "table",
+                "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+                "targets": [
+                  {
+                    "expr": "sum(flask_http_request_total) by (environment, method, path, status)",
+                    "format": "table",
+                    "instant": true,
+                    "refId": "A"
+                  }
+                ],
+                "transformations": [
+                  {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {"Time": true, "__name__": true, "job": true, "instance": true},
+                      "indexByName": {},
+                      "renameByName": {
+                        "environment": "Ambiente",
+                        "method": "Método",
+                        "path": "Ruta",
+                        "status": "Estado",
+                        "Value": "Total"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+
+# Prometheus
+prometheus:
+  enabled: true
+  
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - prometheus.monitoring.localhost
+    paths:
+      - /
+  
+  prometheusSpec:
+    retention: 15d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+    
+    # Service Monitors adicionales para nuestras apps
+    additionalScrapeConfigs:
+      - job_name: 'flask-app-dev'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['web-app.dev.svc.cluster.local:80']
+            labels:
+              environment: 'dev'
+      
+      - job_name: 'flask-app-pro'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['web-app.pro.svc.cluster.local:80']
+            labels:
+              environment: 'pro'
+
+# Alertmanager (deshabilitado - las alertas se ven en Prometheus)
+alertmanager:
+  enabled: false
+
+# Reglas de alertas - Solo las necesarias
+defaultRules:
+  create: true
+  rules:
+    alertmanager: false
+    etcd: false
+    configReloaders: false
+    general: false
+    k8s: false
+    kubeApiserverAvailability: false
+    kubeApiserverSlos: false
+    kubeControllerManager: false
+    kubelet: false
+    kubeProxy: false
+    kubePrometheusGeneral: false
+    kubePrometheusNodeRecording: false
+    kubernetesApps: false
+    kubernetesResources: false
+    kubernetesStorage: false
+    kubernetesSystem: false
+    kubeScheduler: false
+    kubeStateMetrics: false
+    network: false
+    node: false
+    nodeExporterAlerting: false
+    nodeExporterRecording: false
+    prometheus: false
+    prometheusOperator: false
+
+# Alertas adicionales personalizadas
+additionalPrometheusRulesMap:
+  custom-alerts:
+    groups:
+      - name: flask-app-alerts
+        interval: 30s
+        rules:
+          # Alerta: Pods no disponibles (por falta de métricas)
+          - alert: FlaskAppPodsNotReady
+            expr: |
+              (count(up{job="flask-app-dev"} == 1) < 2) or (count(up{job="flask-app-pro"} == 1) < 4)
+            for: 2m
+            labels:
+              severity: warning
+              component: flask-app
+            annotations:
+              summary: "Flask app tiene menos pods de los esperados"
+              description: "DEV debería tener 2 pods, PRO debería tener 4 pods"
+          
+          # Alerta: CPU alta
+          - alert: FlaskAppHighCPU
+            expr: |
+              sum(rate(container_cpu_usage_seconds_total{namespace=~"dev|pro", pod=~"web-app.*"}[5m])) by (namespace, pod) > 0.8
+            for: 5m
+            labels:
+              severity: warning
+              component: flask-app
+            annotations:
+              summary: "CPU alta en Flask app"
+              description: "Pod {{ $labels.pod }} en {{ $labels.namespace }} usando {{ $value }}% CPU"
+          
+          # Alerta: Memoria alta
+          - alert: FlaskAppHighMemory
+            expr: |
+              sum(container_memory_working_set_bytes{namespace=~"dev|pro", pod=~"web-app.*"}) by (namespace, pod) / 
+              sum(container_spec_memory_limit_bytes{namespace=~"dev|pro", pod=~"web-app.*"}) by (namespace, pod) > 0.9
+            for: 5m
+            labels:
+              severity: warning
+              component: flask-app
+            annotations:
+              summary: "Memoria alta en Flask app"
+              description: "Pod {{ $labels.pod }} en {{ $labels.namespace }} usando más del 90% de memoria"
+          
+          # Alerta: Tasa de errores HTTP 5xx alta
+          - alert: FlaskAppHighErrorRate
+            expr: |
+              rate(flask_http_request_total{status=~"5.."}[5m]) / 
+              rate(flask_http_request_total[5m]) > 0.05
+            for: 5m
+            labels:
+              severity: critical
+              component: flask-app
+            annotations:
+              summary: "Tasa alta de errores 5xx en Flask app"
+              description: "La app tiene más del 5% de errores 5xx en los últimos 5 minutos"
+
+# Node Exporter (métricas de nodos) - DESACTIVADO
+nodeExporter:
+  enabled: false
+
+# Kube State Metrics (métricas de K8s) - DESACTIVADO
+kubeStateMetrics:
+  enabled: false
+
+# Prometheus Operator (necesario para alertas)
+prometheusOperator:
+  enabled: true

@@ -1,0 +1,11 @@
+Flask==2.3.2
+psycopg2-binary==2.9.6
+redis==4.5.5
+minio==7.1.13
+python-dotenv==1.0.0
+gunicorn==20.1.0
+Werkzeug==2.3.6
+requests==2.31.0
+prometheus-flask-exporter==0.20.3
+pytest==7.4.3
+pytest-mock==3.12.0

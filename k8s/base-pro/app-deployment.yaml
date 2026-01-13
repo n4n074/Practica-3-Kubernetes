@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 2  # Será sobrescrito por patches en dev/pro
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: web-app
+        image: flask-app:latest  # Será actualizado con el registry en overlays
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        # Database
+        - name: DB_HOST
+          value: postgres
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: db_name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: db_user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: db_password
+        # Redis (opcional - presente solo en pro)
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: redis_host
+              optional: true
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: redis_port
+              optional: true
+        # MinIO
+        - name: MINIO_ENDPOINT
+          value: minio:9000
+        - name: MINIO_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: minio_user
+        - name: MINIO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: minio_password
+        - name: MINIO_PUBLIC_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: minio_public_port
+        # Environment
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: environment
+        - name: LB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: lb_host
+        - name: LB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: lb_port
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: logs
+        emptyDir: {}  # Logs efímeros (mejor práctica en K8s)
