@@ -95,7 +95,8 @@ jobs:
           MINIO_USER: minioadmin
           MINIO_PASSWORD: minioadmin
           MINIO_PUBLIC_PORT: 9000
-          REDIS_PORT: 0
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
           LB_PORT: 80
         run: |
           echo "Running tests with coverage..."
