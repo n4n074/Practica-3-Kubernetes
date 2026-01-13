@@ -2,7 +2,6 @@ import psycopg2
 import os
 import time
 from minio import Minio
-from minio.error import S3Error
 import logging
 
 logging.basicConfig(level=logging.INFO)

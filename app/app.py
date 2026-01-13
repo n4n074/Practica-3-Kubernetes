@@ -71,7 +71,7 @@ def invalidate_users_cache():
         r = get_redis()
         if r:
             r.delete(USERS_CACHE_KEY)
-    except:
+    except Exception:
         pass
 
 
@@ -84,7 +84,7 @@ def get_users_from_cache():
         cached_data = r.get(USERS_CACHE_KEY)
         if cached_data:
             return json.loads(cached_data), True  # True = desde caché
-    except:
+    except Exception:
         pass
     return None, False
 
@@ -95,7 +95,7 @@ def save_users_to_cache(users_list):
         r = get_redis()
         if r:
             r.setex(USERS_CACHE_KEY, CACHE_TTL, json.dumps(users_list))
-    except:
+    except Exception:
         pass
 
 
@@ -104,7 +104,7 @@ def check_postgres():
         conn = get_db()
         conn.close()
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -115,7 +115,7 @@ def check_redis():
             return False
         r.ping()
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -124,7 +124,7 @@ def check_minio():
         client = get_minio()
         client.list_buckets()
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -132,7 +132,7 @@ def check_load_balancer():
     try:
         response = requests.get(f"http://{LB_HOST}:{LB_PORT}/health", timeout=3)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
@@ -289,7 +289,7 @@ def add_user():
             )
 
             image_url = unique_filename
-            print(f"[ADD_USER] Imagen subida correctamente")
+            print("[ADD_USER] Imagen subida correctamente")
 
         # Guardar en base de datos
         print(f"[ADD_USER] Guardando en BD: {name}, {email}, {image_url}")
@@ -300,7 +300,7 @@ def add_user():
             (name, email, image_url),
         )
         conn.commit()
-        print(f"[ADD_USER] Usuario guardado correctamente")
+        print("[ADD_USER] Usuario guardado correctamente")
         cur.close()
         conn.close()
 
@@ -328,7 +328,7 @@ def delete_user(user_id):
             client = get_minio()
             try:
                 client.remove_object(BUCKET_NAME, user["image_url"])
-            except:
+            except Exception:
                 pass
 
         # Eliminar usuario
