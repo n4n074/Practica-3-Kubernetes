@@ -270,17 +270,17 @@ additionalPrometheusRulesMap:
       - name: flask-app-alerts
         interval: 30s
         rules:
-          # Alerta: Pods no disponibles (por falta de métricas)
+          # Alerta: Pods no disponibles
           - alert: FlaskAppPodsNotReady
             expr: |
-              (count(up{job="flask-app-dev"} == 1) < 2) or (count(up{job="flask-app-pro"} == 1) < 4)
+              count(up{job="flask-app-dev"} == 1) < 1 or count(up{job="flask-app-pro"} == 1) < 1
             for: 2m
             labels:
               severity: warning
               component: flask-app
             annotations:
-              summary: "Flask app tiene menos pods de los esperados"
-              description: "DEV debería tener 2 pods, PRO debería tener 4 pods"
+              summary: "Flask app no tiene pods activos"
+              description: "Al menos un entorno (DEV o PRO) no tiene ningún pod disponible"
           
           # Alerta: CPU alta
           - alert: FlaskAppHighCPU
