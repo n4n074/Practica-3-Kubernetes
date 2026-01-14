@@ -14,10 +14,3 @@ metadata:
     name: pro
     environment: production
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: monitoring
-  labels:
-    name: monitoring
-    environment: monitoring
