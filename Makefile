@@ -4,6 +4,12 @@ up:
 	@echo "Creando cluster k3d..."
 	k3d cluster create practica3 --servers 1 --agents 2 --port "8080:80@loadbalancer"
 	
+	@echo "Construyendo imagen Docker..."
+	docker build -t flask-app:latest ./app
+	
+	@echo "Importando imagen al cluster..."
+	k3d image import flask-app:latest -c practica3
+	
 	@echo "Creando namespaces..."
 	kubectl apply -f k8s/namespaces/namespaces.yaml
 	
