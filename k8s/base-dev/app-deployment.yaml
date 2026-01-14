@@ -6,7 +6,7 @@ metadata:
     app: web-app
 spec:
   replicas: 2  # Será sobrescrito por patches en dev/pro
-  selector:
+  selector: #Gestiona solo los pods con esta etiqueta
     matchLabels:
       app: web-app
   template:

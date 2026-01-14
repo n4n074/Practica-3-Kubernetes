@@ -1,4 +1,5 @@
-.PHONY: up down stop-db-pro start-db-pro stop-cache-pro start-cache-pro stop-dev stop-pro start-dev start-pro
+.PHONY: up down stop-db-pro start-db-pro stop-cache-pro start-cache-pro stop-dev stop-pro start-dev start-pro \
+        update-image update-dev update-pro update-monitoring restart-dev restart-pro 
 
 up:
 	@echo "Creando cluster k3d..."
@@ -88,3 +89,48 @@ start-pro:
 	kubectl scale deployment redis -n pro --replicas=1
 	kubectl scale deployment minio -n pro --replicas=1
 	@echo "Entorno PRO levantado."
+
+# ==========================================
+# Comandos de actualización (sin reiniciar cluster)
+# ==========================================
+
+update-image:
+	@echo "Reconstruyendo imagen Docker..."
+	docker build -t flask-app:latest ./app
+	@echo "Importando imagen actualizada al cluster..."
+	k3d image import flask-app:latest -c practica3
+	@echo "Imagen actualizada. Usa 'make restart-dev' o 'make restart-pro' para aplicar cambios."
+
+update-dev:
+	@echo "Actualizando configuración de DEV..."
+	kubectl apply -k k8s/dev/
+	@echo "Configuración de DEV actualizada."
+
+update-pro:
+	@echo "Actualizando configuración de PRO..."
+	kubectl apply -k k8s/pro/
+	@echo "Configuración de PRO actualizada."
+
+update-monitoring:
+	@echo "Actualizando stack de monitoreo..."
+	helm upgrade monitoring prometheus-community/kube-prometheus-stack \
+		--namespace monitoring \
+		-f k8s/helm/values.yaml
+	@echo "Monitoreo actualizado."
+
+restart-dev:
+	@echo "Reiniciando pods de DEV..."
+	kubectl rollout restart deployment web-app -n dev
+	kubectl rollout restart deployment minio -n dev
+	kubectl rollout restart statefulset postgres -n dev
+	@echo "Pods de DEV reiniciados."
+
+restart-pro:
+	@echo "Reiniciando pods de PRO..."
+	kubectl rollout restart deployment web-app -n pro
+	kubectl rollout restart deployment minio -n pro
+	kubectl rollout restart deployment redis -n pro
+	kubectl rollout restart statefulset postgres -n pro
+	@echo "Pods de PRO reiniciados."
+
+
