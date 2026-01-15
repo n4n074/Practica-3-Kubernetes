@@ -5,7 +5,7 @@ Aplicación web Flask desplegada en Kubernetes (k3d) con dos entornos (DEV y PRO
 ---
 ## Autor
 
-Joan - [GitHub](https://github.com/n4n074)
+Joan Matemalas - [GitHub](https://github.com/n4n074)
 
 
 
